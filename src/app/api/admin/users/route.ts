@@ -15,7 +15,8 @@ export async function GET() {
       name: true,
       email: true,
       emailVerified: true,
-      image: true
+      image: true,
+      role: true // 添加 role 字段
     }
   })
   return NextResponse.json(users)
@@ -44,10 +45,14 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { id, ...data } = await request.json()
+  const { id, name, email, role } = await request.json()
   const user = await prisma.user.update({
     where: { id },
-    data
+    data: {
+      name,
+      email,
+      role
+    }
   })
   return NextResponse.json(user)
 }

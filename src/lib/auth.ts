@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 export const register = async (data: { 
   name: string;
   email: string; 
-  password: string 
+  password: string;
+  image?: string;
 }) => {
   const exists = await prisma.user.findUnique({
     where: { email: data.email }
@@ -22,7 +23,8 @@ export const register = async (data: {
     data: {
       name: data.name,
       email: data.email,
-      password: hashedPassword
+      password: hashedPassword,
+      image: data.image
     }
   });
 

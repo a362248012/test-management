@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
@@ -11,17 +12,20 @@ export default function RegisterPage() {
         className="space-y-4 w-full max-w-sm p-8 border rounded-lg shadow-lg"
         action={async (formData) => {
           try {
+            const formDataObj = new FormData();
+            formDataObj.append("name", formData.get("name") as string);
+            formDataObj.append("email", formData.get("email") as string);
+            formDataObj.append("password", formData.get("password") as string);
+            
+            const imageFile = formData.get("image");
+            if (imageFile instanceof File) {
+              formDataObj.append("image", imageFile);
+            }
+
             // 1. 注册用户
             const response = await fetch('/api/register', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                name: formData.get("name"),
-                email: formData.get("email"),
-                password: formData.get("password")
-              }),
+              body: formDataObj,
             });
 
             if (!response.ok) {
@@ -76,6 +80,16 @@ export default function RegisterPage() {
               name="password" 
               type="password" 
               required 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="image">头像</Label>
+            <Input
+              id="image"
+              name="image"
+              type="file"
+              accept="image/*"
             />
           </div>
 

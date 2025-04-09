@@ -1,16 +1,30 @@
-import { getServerSession, type Session } from 'next-auth'
-import { authConfig } from '@/auth'
-import SidebarLayout from '@/components/layout/SidebarLayout'
+import { getServerSession } from "next-auth";
+import { authConfig } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { TestExecutionList } from "./components/TestExecutionList";
 
 export default async function TestExecutionsPage() {
-  const session = (await getServerSession(authConfig)) as Session
+  const session = await getServerSession(authConfig);
+  if (!session) return null;
+
+  const executions = await prisma.testExecution.findMany({
+    include: {
+      testPlan: true,
+      testCase: true,
+      executedBy: true
+    },
+    orderBy: {
+      executedAt: "desc"
+    }
+  });
 
   return (
-    <SidebarLayout session={session}>
-      <div>
-        <h1>测试执行</h1>
-        <p>这里是测试执行管理页面</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">测试执行记录</h1>
       </div>
-    </SidebarLayout>
-  )
+      
+      <TestExecutionList executions={executions} />
+    </div>
+  );
 }

@@ -20,6 +20,9 @@ model User {
   role          Role      @default(USER)
   accounts      Account[]
   sessions      Session[]
+  testCases     TestCase[]
+  testPlans     TestPlan[]
+  executedTests TestExecution[]
 }
 
 model Account {
@@ -46,6 +49,51 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TestCase {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  steps       String
+  expected    String
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById String
+  testPlan    TestPlan? @relation(fields: [testPlanId], references: [id])
+  testPlanId  String?
+  executions  TestExecution[]
+}
+
+model TestPlan {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String     @default("PLANNING")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  createdById String
+  testCases   TestCase[]
+  executions  TestExecution[]
+}
+
+model TestExecution {
+  id           String     @id @default(cuid())
+  testPlan     TestPlan   @relation(fields: [testPlanId], references: [id])
+  testPlanId   String
+  testCase     TestCase   @relation(fields: [testCaseId], references: [id])
+  testCaseId   String
+  status       String     @default("PENDING")
+  result       String?
+  executedBy   User       @relation(fields: [executedById], references: [id])
+  executedById String
+  executedAt   DateTime   @default(now())
+  comments     String?
 }
 
 datasource db {

@@ -118,5 +118,22 @@
   }
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(
+      to bottom right,
+      var(--background),
+      var(--card)
+    );
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-card rounded-lg border border-border shadow-sm transition-all hover:shadow-md;
+  }
+  .btn {
+    @apply transition-all hover:scale-[1.02] active:scale-[0.98];
+  }
+  .sidebar-item {
+    @apply transition-all hover:translate-x-1 hover:bg-accent/50;
   }
 }
