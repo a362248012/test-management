@@ -22,28 +22,28 @@ const menuGroups = [
   {
     title: "核心功能",
     items: [
-      { name: "仪表盘", path: "/dashboard" },
+      { name: "仪表盘", path: "/dashboard", icon: "/window.svg" },
     ]
   },
   {
     title: "测试管理", 
     items: [
-      { name: "测试用例", path: "/test-cases" },
-      { name: "测试计划", path: "/test-plans" },
-      { name: "测试执行", path: "/test-executions" },
+      { name: "测试用例", path: "/test-cases", icon: "/file.svg" },
+      { name: "测试计划", path: "/test-plans", icon: "/file.svg" },
+      { name: "测试执行", path: "/test-executions", icon: "/file.svg" },
     ]
   },
   {
     title: "分析工具",
     items: [
-      { name: "AI 测试工具", path: "/ai-tools" },
-      { name: "报告", path: "/reports" },
+      { name: "AI 测试工具", path: "/ai-tools", icon: "/globe.svg" },
+      { name: "报告", path: "/reports", icon: "/globe.svg" },
     ]
   },
   {
     title: "系统管理",
     items: [
-      { name: "用户管理", path: "/admin/users" },
+      { name: "用户管理", path: "/admin/users", icon: "/window.svg" },
     ]
   }
 ]
@@ -133,12 +133,19 @@ export default function SidebarLayout({
 									<Button
 										key={item.path}
 										variant={activePath === item.path ? "default" : "ghost"}
-										className="w-full justify-start sidebar-item"
+										className="w-full justify-start sidebar-item gap-2"
 										onClick={() => {
 											setActivePath(item.path)
 											router.push(item.path)
 										}}
 									>
+										<Image 
+											src={item.icon}
+											alt=""
+											width={16}
+											height={16}
+											className="opacity-70"
+										/>
 										{item.name}
 									</Button>
 								))}

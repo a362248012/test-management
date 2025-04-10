@@ -23,6 +23,7 @@ model User {
   testCases     TestCase[]
   testPlans     TestPlan[]
   executedTests TestExecution[]
+  knowledgeBases KnowledgeBase[]
 }
 
 model Account {
@@ -94,6 +95,19 @@ model TestExecution {
   executedById String
   executedAt   DateTime   @default(now())
   comments     String?
+}
+
+model KnowledgeBase {
+  id          String     @id @default(cuid())
+  title       String
+  content     String     @db.Text
+  category    String
+  tags        String[]
+  isPublic    Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  createdById String
 }
 
 datasource db {

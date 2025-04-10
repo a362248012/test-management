@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { CreateTestPlan } from "./CreateTestPlan";
@@ -30,32 +32,42 @@ export function TestPlanList() {
         <Input placeholder="搜索测试计划..." className="max-w-sm" />
         <CreateTestPlan />
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>计划名称</TableHead>
-            <TableHead>描述</TableHead>
-            <TableHead>状态</TableHead>
-            <TableHead>开始日期</TableHead>
-            <TableHead>结束日期</TableHead>
-            <TableHead>操作</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {testPlans.map((plan) => (
-            <TableRow key={plan.id}>
-              <TableCell>{plan.name}</TableCell>
-              <TableCell>{plan.description}</TableCell>
-              <TableCell>{plan.status}</TableCell>
-              <TableCell>{plan.startDate}</TableCell>
-              <TableCell>{plan.endDate}</TableCell>
-              <TableCell>
-                <Button variant="ghost">编辑</Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <Card className="p-4">
+        <div className="relative h-[500px] overflow-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-background z-10">
+              <TableRow>
+                <TableHead>计划名称</TableHead>
+                <TableHead>描述</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead>开始日期</TableHead>
+                <TableHead>结束日期</TableHead>
+                <TableHead>操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {testPlans.map((plan) => (
+                <TableRow key={plan.id}>
+                  <TableCell>{plan.name}</TableCell>
+                  <TableCell>{plan.description}</TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={plan.status === '进行中' ? 'default' : 'secondary'}
+                    >
+                      {plan.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{plan.startDate}</TableCell>
+                  <TableCell>{plan.endDate}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost">编辑</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
     </div>
   );
 }

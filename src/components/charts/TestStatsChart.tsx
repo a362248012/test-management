@@ -37,7 +37,6 @@ export default function TestStatsChart({ data }: { data: StatsData[] }) {
 
   return (
     <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-      <h2 className="text-xl font-semibold mb-6 text-gray-800 dark:text-gray-200">测试统计</h2>
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart

@@ -110,14 +110,32 @@ async function getTestExecutionStats(userId: string) {
 
 async function getTestCaseCount(userId: string) {
   try {
-    return await prisma.testCase.count({
+    const counts = await prisma.testCase.groupBy({
+      by: ['status'],
       where: {
         createdById: userId
+      },
+      _count: {
+        _all: true
       }
     })
+    
+    return {
+      total: counts.reduce((sum, item) => sum + item._count._all, 0),
+      passed: counts.find(item => item.status === 'PASSED')?._count._all || 0,
+      failed: counts.find(item => item.status === 'FAILED')?._count._all || 0,
+      other: counts
+        .filter(item => !['PASSED', 'FAILED'].includes(item.status))
+        .reduce((sum, item) => sum + item._count._all, 0)
+    }
   } catch (error) {
     console.error('Error fetching test cases:', error)
-    return 0
+    return {
+      total: 0,
+      passed: 0,
+      failed: 0,
+      other: 0
+    }
   }
 }
 
@@ -209,15 +227,29 @@ export default async function DashboardPage() {
   const testStatsData = await getTestStats(userId); // 获取测试统计数据
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Test Cases</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{testCaseCount}</div>
+            <div className="text-2xl font-bold">{testCaseCount.total}</div>
+            <div className="flex gap-4 mt-2 text-sm">
+              <div className="flex items-center">
+                <span className="w-3 h-3 rounded-full bg-green-500 mr-1"></span>
+                <span>通过: {testCaseCount.passed}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-3 h-3 rounded-full bg-red-500 mr-1"></span>
+                <span>失败: {testCaseCount.failed}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-3 h-3 rounded-full bg-gray-500 mr-1"></span>
+                <span>其他: {testCaseCount.other}</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -245,15 +277,42 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {trendData.length > 0 && (
-          <PassFailTrendChart data={trendData} />
-        )}
-        <TestPlanProgressChart progress={await getTestPlanProgress(userId)} />
-        {testStatsData.length > 0 && (
-          <TestStatsChart data={testStatsData} />
-        )}
-        <SystemHealth />
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>通过/失败趋势</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {trendData.length > 0 && (
+                <PassFailTrendChart data={trendData} />
+              )}
+            </CardContent>
+          </Card>
+          <SystemHealth />
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>测试计划进度</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TestPlanProgressChart progress={await getTestPlanProgress(userId)} />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>测试统计</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {testStatsData.length > 0 && (
+                <TestStatsChart data={testStatsData} />
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
