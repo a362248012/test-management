@@ -152,19 +152,25 @@ async function getTestPlanProgress(userId: string) {
 
     if (testPlans.length === 0) return 0;
 
-    const totalTestCases = testPlans.reduce(
-      (sum, plan) => sum + plan.testCases.length,
-      0
-    );
-    const completedTestCases = testPlans.reduce((sum, plan) => {
-      return (
-        sum + plan.testCases.filter((tc) => tc.status === "COMPLETED").length
-      );
+    // 计算所有测试计划的平均进度
+    const totalProgress = testPlans.reduce((sum, plan) => {
+      // 如果测试计划状态为已完成，直接计为100%
+      if (plan.status === "COMPLETED") {
+        return sum + 100;
+      }
+
+      // 否则计算测试用例完成百分比
+      const totalTestCases = plan.testCases.length;
+      if (totalTestCases === 0) return sum + 0;
+
+      const completedTestCases = plan.testCases.filter(
+        (tc) => tc.status === "COMPLETED" || tc.status === "PASSED"
+      ).length;
+      
+      return sum + Math.round((completedTestCases / totalTestCases) * 100);
     }, 0);
 
-    return totalTestCases > 0
-      ? Math.round((completedTestCases / totalTestCases) * 100)
-      : 0;
+    return Math.round(totalProgress / testPlans.length);
   } catch (error) {
     console.error("Error fetching test plan progress:", error);
     return 0;

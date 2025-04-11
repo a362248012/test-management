@@ -1,8 +1,11 @@
 /** @format */
 
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useProject } from "@/components/layout/ProjectSwitcher"
 import Image from "next/image"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -49,12 +52,31 @@ import {
 import type { TestCase } from "@prisma/client"
 import { EditTestCase } from "./EditTestCase"
 
-interface TestCaseListProps {
-	testCases: TestCase[]
-}
+export function TestCaseList() {
+  const { currentProject } = useProject()
+	const [cases, setCases] = useState<TestCase[]>([])
+	const [isLoading, setIsLoading] = useState(true)
 
-export function TestCaseList({ testCases }: TestCaseListProps) {
-	const [cases, setCases] = useState(testCases)
+	useEffect(() => {
+		const fetchTestCases = async () => {
+			try {
+				setIsLoading(true)
+				const url = currentProject 
+					? `/api/test-cases?projectId=${currentProject.id}`
+					: '/api/test-cases'
+				const response = await fetch(url)
+				if (response.ok) {
+					setCases(await response.json())
+				}
+			} catch (error) {
+				console.error('Failed to fetch test cases:', error)
+			} finally {
+				setIsLoading(false)
+			}
+		}
+
+		fetchTestCases()
+	}, [currentProject?.id])
 	const [searchTerm, setSearchTerm] = useState('')
 	const [dateFilter, setDateFilter] = useState('')
 
@@ -147,19 +169,29 @@ export function TestCaseList({ testCases }: TestCaseListProps) {
 				<Table className="[&_tr:hover]:bg-muted/50 [&_tr]:transition-colors">
 					<TableHeader className="sticky top-0 bg-background/95 backdrop-blur z-10">
 						<TableRow>
-							<TableHead >标题</TableHead>
-							<TableHead >状态</TableHead>
-							<TableHead >创建人</TableHead>
-							<TableHead >
-								创建时间
-							</TableHead>
-							<TableHead >操作</TableHead>
+							<TableHead>标题</TableHead>
+							<TableHead>优先级</TableHead>
+							<TableHead>状态</TableHead>
+							<TableHead>创建人</TableHead>
+							<TableHead>创建时间</TableHead>
+							<TableHead>操作</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{filteredCases.map((testCase) => (
 							<TableRow key={testCase.id}>
 								<TableCell>{testCase.title}</TableCell>
+								<TableCell>
+									<Badge
+										variant={
+											testCase.priority === "P0"
+												? "destructive"
+												: "secondary"
+										}
+									>
+										{testCase.priority}
+									</Badge>
+								</TableCell>
 								<TableCell>
 									<Badge
 										variant={
@@ -198,49 +230,77 @@ export function TestCaseList({ testCases }: TestCaseListProps) {
 												详情
 											</Button>
 										</DialogTrigger>
-										<DialogContent className="max-w-2xl">
+										<DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
 											<DialogHeader>
 												<DialogTitle>测试用例详情</DialogTitle>
 											</DialogHeader>
-											<div className="space-y-4">
-												<div>
-													<h3 className="font-medium">标题</h3>
-													<p>{testCase.title}</p>
+											<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+												<div className="md:col-span-1 space-y-4">
+													<div>
+														<h3 className="font-medium">标题</h3>
+														<p>{testCase.title}</p>
+													</div>
+													<div>
+														<h3 className="font-medium">优先级</h3>
+														<Badge
+															variant={
+																testCase.priority === "P0"
+																	? "destructive"
+																	: "secondary"
+															}
+														>
+															{testCase.priority}
+														</Badge>
+													</div>
+													<div>
+														<h3 className="font-medium">状态</h3>
+														<Badge
+															variant={
+																testCase.status === "PASSED"
+																	? "success"
+																	: testCase.status === "FAILED"
+																	? "destructive"
+																	: "secondary"
+															}
+															className="capitalize"
+														>
+															{testCase.status.toLowerCase()}
+														</Badge>
+													</div>
+													<div>
+														<h3 className="font-medium">创建人</h3>
+														<p>{testCase.createdById}</p>
+													</div>
+													<div>
+														<h3 className="font-medium">创建时间</h3>
+														<p>{new Date(testCase.createdAt).toLocaleString()}</p>
+													</div>
 												</div>
-												<div>
-													<h3 className="font-medium">描述</h3>
-													<p>{testCase.description || "无描述"}</p>
-												</div>
-												<div>
-													<h3 className="font-medium">测试步骤</h3>
-													<p>{testCase.steps || "无测试步骤"}</p>
-												</div>
-												<div>
-													<h3 className="font-medium">预期结果</h3>
-													<p>{testCase.expected || "无预期结果"}</p>
-												</div>
-												<div>
-													<h3 className="font-medium">状态</h3>
-													<Badge
-														variant={
-															testCase.status === "PASSED"
-																? "success"
-																: testCase.status === "FAILED"
-																? "destructive"
-																: "secondary"
-														}
-														className="capitalize"
-													>
-														{testCase.status.toLowerCase()}
-													</Badge>
-												</div>
-												<div>
-													<h3 className="font-medium">创建人</h3>
-													<p>{testCase.createdById}</p>
-												</div>
-												<div>
-													<h3 className="font-medium">创建时间</h3>
-													<p>{new Date(testCase.createdAt).toLocaleString()}</p>
+												<div className="md:col-span-2 space-y-4">
+													<div>
+														<h3 className="font-medium">描述</h3>
+														<div className="prose max-h-40 overflow-y-auto p-2 border rounded">
+															<ReactMarkdown remarkPlugins={[remarkGfm]}>
+																{testCase.description || "无描述"}
+															</ReactMarkdown>
+														</div>
+													</div>
+													<div>
+														<h3 className="font-medium">测试步骤</h3>
+														<div className="prose max-h-40 overflow-y-auto p-2 border rounded">
+															<ReactMarkdown remarkPlugins={[remarkGfm]}>
+																{testCase.steps || "无测试步骤"}
+															</ReactMarkdown>
+														</div>
+													</div>
+													<div>
+														<h3 className="font-medium">预期结果</h3>
+														<div className="prose max-h-40 overflow-y-auto p-2 border rounded">
+															<ReactMarkdown remarkPlugins={[remarkGfm]}>
+																{testCase.expected || "无预期结果"}
+															</ReactMarkdown>
+														</div>
+													</div>
 												</div>
 											</div>
 										</DialogContent>

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { requirement } = await req.json();
+  const { ticketId, prompt, requirement, originalTestCase, modificationRequest } = await req.json();
+  const inputText = prompt || requirement;
 
   try {
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
@@ -15,12 +16,23 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content: "你是一个专业的测试工程师，请根据需求生成详细的测试用例，包含测试步骤、预期结果和优先级。"
+            content: `你是一个专业的测试工程师，${originalTestCase ? '请根据修改要求优化以下测试用例' : '请根据需求生成详细的测试用例'}，包含测试步骤、预期结果和优先级。`
           },
-          {
-            role: "user",
-            content: `根据以下需求生成测试用例：\n${requirement}`
-          }
+          ...(originalTestCase ? [
+            {
+              role: "assistant",
+              content: `原始测试用例：\n${originalTestCase}`
+            },
+            {
+              role: "user",
+              content: `修改要求：\n${modificationRequest || '请优化此测试用例'}`
+            }
+          ] : [
+            {
+              role: "user",
+              content: `根据以下需求生成测试用例：\n${inputText}`
+            }
+          ])
         ],
         temperature: 0.7,
         stream: true

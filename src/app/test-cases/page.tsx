@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth"
 import { authConfig } from "@/auth"
 import { TestCaseList, CreateTestCase } from "./components"
-import { prisma } from "@/lib/prisma"
 
 export default async function TestCasesPage() {
   const session = await getServerSession(authConfig) as {
@@ -18,15 +17,6 @@ export default async function TestCasesPage() {
     return <div>请先登录</div>
   }
 
-  const testCases = await prisma.testCase.findMany({
-    where: {
-      createdById: session.user.id
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  })
-
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -34,7 +24,7 @@ export default async function TestCasesPage() {
         <CreateTestCase />
       </div>
       
-      <TestCaseList testCases={testCases} />
+      <TestCaseList />
     </div>
   )
 }

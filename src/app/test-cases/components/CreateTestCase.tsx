@@ -10,6 +10,13 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export function CreateTestCase() {
   const [open, setOpen] = useState(false)
@@ -17,7 +24,8 @@ export function CreateTestCase() {
     title: "",
     description: "",
     steps: "",
-    expected: ""
+    expected: "",
+    priority: "P2"
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +84,23 @@ export function CreateTestCase() {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm({...form, steps: e.target.value})}
               required
             />
+          </div>
+          <div>
+            <Label>优先级</Label>
+            <Select 
+              value={form.priority}
+              onValueChange={(value) => setForm({...form, priority: value})}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="选择优先级" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="P0">P0 - 最高</SelectItem>
+                <SelectItem value="P1">P1 - 高</SelectItem>
+                <SelectItem value="P2">P2 - 中</SelectItem>
+                <SelectItem value="P3">P3 - 低</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="expected">预期结果</Label>

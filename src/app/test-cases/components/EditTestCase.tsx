@@ -10,7 +10,15 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import type { TestCase } from "@prisma/client"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { TestCase } from "@prisma/client"
+import { Priority } from "@/lib/constants"
 
 interface EditTestCaseProps {
   testCase: TestCase
@@ -23,18 +31,22 @@ export function EditTestCase({ testCase, onSuccess }: EditTestCaseProps) {
     title: testCase.title,
     description: testCase.description || "",
     steps: testCase.steps || "",
-    expected: testCase.expected || ""
+    expected: testCase.expected || "",
+    priority: testCase.priority || Priority.P2
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    const response = await fetch(`/api/test-cases/${testCase.id}`, {
+    const response = await fetch(`/api/test-cases`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(form)
+      body: JSON.stringify({
+        id: testCase.id,
+        ...form
+      })
     })
 
     if (response.ok) {
@@ -82,6 +94,23 @@ export function EditTestCase({ testCase, onSuccess }: EditTestCaseProps) {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm({...form, steps: e.target.value})}
               required
             />
+          </div>
+          <div>
+            <Label>优先级</Label>
+            <Select 
+              value={form.priority}
+              onValueChange={(value) => setForm({...form, priority: value as Priority})}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="选择优先级" />
+              </SelectTrigger>
+              <SelectContent>
+              <SelectItem value={Priority.P0}>P0 - 最高</SelectItem>
+              <SelectItem value={Priority.P1}>P1 - 高</SelectItem>
+              <SelectItem value={Priority.P2}>P2 - 中</SelectItem>
+              <SelectItem value={Priority.P3}>P3 - 低</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="expected">预期结果</Label>

@@ -1,30 +1,24 @@
+"use client"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { useProject } from "@/components/layout/ProjectSwitcher";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { CreateTestPlan } from "./CreateTestPlan";
+import { EditTestPlan } from "./EditTestPlan";
+import useSWR from "swr";
+import { TestPlan } from "@/types/test-plan";
 
 export function TestPlanList() {
-  // TODO: 从API获取测试计划数据
-  const testPlans = [
-    {
-      id: "1",
-      name: "登录功能测试",
-      description: "测试用户登录流程",
-      status: "进行中",
-      startDate: "2025-04-01",
-      endDate: "2025-04-10"
-    },
-    {
-      id: "2",
-      name: "支付功能测试",
-      description: "测试支付流程",
-      status: "未开始",
-      startDate: "2025-04-15",
-      endDate: "2025-04-20"
-    }
-  ];
+  const { currentProject } = useProject();
+  const { data: testPlans, isLoading, mutate } = useSWR<TestPlan[]>(
+    `/api/test-plans${currentProject ? `?projectId=${currentProject.id}` : ''}`,
+    (url: string) => fetch(url).then((res) => res.json())
+  );
+
+  if (isLoading) return <div>加载中...</div>;
+  if (!testPlans) return <div>加载失败</div>;
 
   return (
     <div className="space-y-4">
@@ -42,6 +36,7 @@ export function TestPlanList() {
                 <TableHead>状态</TableHead>
                 <TableHead>开始日期</TableHead>
                 <TableHead>结束日期</TableHead>
+                <TableHead>实施方案</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
@@ -52,15 +47,18 @@ export function TestPlanList() {
                   <TableCell>{plan.description}</TableCell>
                   <TableCell>
                     <Badge 
-                      variant={plan.status === '进行中' ? 'default' : 'secondary'}
+                      variant={plan.status === 'COMPLETED' ? 'default' : 'secondary'}
                     >
-                      {plan.status}
+                      {plan.status === 'COMPLETED' ? '已完成' : '进行中'}
                     </Badge>
                   </TableCell>
                   <TableCell>{plan.startDate}</TableCell>
                   <TableCell>{plan.endDate}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">
+                    {plan.implementation || "未设置"}
+                  </TableCell>
                   <TableCell>
-                    <Button variant="ghost">编辑</Button>
+                    <EditTestPlan plan={plan} />
                   </TableCell>
                 </TableRow>
               ))}
