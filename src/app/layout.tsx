@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import ClientLayout from "@/components/layout/ClientLayout";
 import { NavigationProgress } from "@/components/ui/progress-bar";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,14 +31,16 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
   
   return (
-    <html lang="en">
+    <html lang="zh-CN" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NavigationProgress />
-        <ClientLayout session={session}>
-          {children}
-        </ClientLayout>
+        <ThemeProvider>
+          <NavigationProgress />
+          <ClientLayout session={session}>
+            {children}
+          </ClientLayout>
+        </ThemeProvider>
       </body>
     </html>
   );

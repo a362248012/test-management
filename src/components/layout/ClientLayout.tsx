@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import SidebarLayout from "./SidebarLayout"
 import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "@/context/theme"
+import { ProjectProvider } from "@/contexts/ProjectContext"
 
 export default function ClientLayout({
   children,
@@ -22,9 +23,11 @@ export default function ClientLayout({
       ) : (
         <ThemeProvider>
           <SessionProvider session={session}>
-            <SidebarLayout session={session}>
-              {children}
-            </SidebarLayout>
+            <ProjectProvider>
+              <SidebarLayout session={session}>
+                {children}
+              </SidebarLayout>
+            </ProjectProvider>
           </SessionProvider>
         </ThemeProvider>
       )}

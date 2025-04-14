@@ -46,6 +46,7 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name as string
         session.user.email = token.email as string
         session.user.image = token.picture as string | null | undefined
+        session.user.role = token.role as 'ADMIN' | 'USER'
       }
       return session
     },
@@ -65,7 +66,8 @@ export const authOptions: NextAuthOptions = {
         id: dbUser.id,
         name: dbUser.name,
         email: dbUser.email,
-        picture: dbUser.image
+        picture: dbUser.image,
+        role: dbUser.role
       }
     }
   },

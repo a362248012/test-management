@@ -102,47 +102,50 @@ export async function PATCH(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authConfig) as Session
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const data = await request.json()
+    const data = await request.json();
+    const session = await getServerSession(authConfig) as Session;
     
-    if (!session.user?.id) {
-      throw new Error("用户会话无效，缺少用户ID")
+    if (!session?.user) {
+      return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
-
+    
+    if (!data.projectId) {
+      return NextResponse.json({ error: "创建测试用例必须关联项目" }, { status: 400 });
+    }
+    
+    // 创建测试用例，包含必要的关系
     const testCase = await prisma.testCase.create({
       data: {
         title: data.title,
+        description: data.description || "",
         steps: data.steps,
         expected: data.expected,
-        isAIGenerated: data.isAIGenerated || false,
-        projectId: data.projectId,
-        createdById: session.user.id,
-        aiPrompt: data.aiPrompt || null,
-        aiHistory: data.aiHistory || [],
-        relatedTickets: data.relatedTickets ? {
-          connect: data.relatedTickets.connect
-        } : undefined
+        priority: data.priority,
+        isAIGenerated: false,
+        project: {
+          connect: { id: data.projectId }
+        },
+        // 连接到当前用户
+        createdBy: {
+          connect: { id: session.user.id }
+        },
+        // 关联工单，如果提供了
+        ...(data.ticketId && {
+          relatedTickets: {
+            connect: [{ id: data.ticketId }]
+          }
+        }),
+        aiPrompt: null,
+        aiHistory: []
       }
-    })
-
-    return NextResponse.json(testCase)
-  } catch (error) {
-    const requestBody = await request.json().catch(() => 'Failed to parse request body')
-    console.error('Error creating test case:', {
-      error,
-      requestBody
-    })
+    });
+    
+    return NextResponse.json(testCase);
+  } catch (error: any) {
+    console.error("创建测试用例错误:", error);
     return NextResponse.json(
-      { 
-        error: 'Internal Server Error', 
-        details: error instanceof Error ? error.message : String(error),
-        requestData: requestBody
-      },
+      { error: "创建测试用例失败", details: error.message },
       { status: 500 }
-    )
+    );
   }
 }
