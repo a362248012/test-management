@@ -19,11 +19,10 @@ export default async function TestExecutionsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">测试执行记录</h1>
       </div>
-      
       <TestExecutionList executions={executions} />
     </div>
   );

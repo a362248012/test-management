@@ -12,10 +12,13 @@ import { TestPlan } from "@/types/test-plan";
 
 export function TestPlanList() {
   const { currentProject } = useProject();
-  const { data: testPlans, isLoading, mutate } = useSWR<TestPlan[]>(
+  const { data, isLoading, mutate } = useSWR<TestPlan[] | { testPlans: TestPlan[] }>(
     `/api/test-plans${currentProject ? `?projectId=${currentProject.id}` : ''}`,
     (url: string) => fetch(url).then((res) => res.json())
   );
+
+  // 处理数据，确保 testPlans 是一个数组
+  const testPlans = Array.isArray(data) ? data : data?.testPlans || [];
 
   if (isLoading) return <div>加载中...</div>;
   if (!testPlans) return <div>加载失败</div>;
@@ -41,27 +44,35 @@ export function TestPlanList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {testPlans.map((plan) => (
-                <TableRow key={plan.id}>
-                  <TableCell>{plan.name}</TableCell>
-                  <TableCell>{plan.description}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={plan.status === 'COMPLETED' ? 'default' : 'secondary'}
-                    >
-                      {plan.status === 'COMPLETED' ? '已完成' : '进行中'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{plan.startDate}</TableCell>
-                  <TableCell>{plan.endDate}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {plan.implementation || "未设置"}
-                  </TableCell>
-                  <TableCell>
-                    <EditTestPlan plan={plan} />
+              {Array.isArray(testPlans) && testPlans.length > 0 ? (
+                testPlans.map((plan) => (
+                  <TableRow key={plan.id}>
+                    <TableCell>{plan.name}</TableCell>
+                    <TableCell>{plan.description}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={plan.status === 'COMPLETED' ? 'default' : 'secondary'}
+                      >
+                        {plan.status === 'COMPLETED' ? '已完成' : '进行中'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{plan.startDate}</TableCell>
+                    <TableCell>{plan.endDate}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">
+                      {plan.implementation || "未设置"}
+                    </TableCell>
+                    <TableCell>
+                      <EditTestPlan plan={plan} />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    暂无测试计划数据
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>

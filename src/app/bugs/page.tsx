@@ -18,7 +18,7 @@ export default async function BugsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="p-8">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">缺陷管理</h1>
         <CreateBug />

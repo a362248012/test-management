@@ -1,72 +1,81 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withAuth, withErrorHandler } from '@/lib/api-middleware';
+import type { Session } from 'next-auth';
 
-export async function GET(
-  request: Request,
+export const GET = withErrorHandler(async (
+  _: Request,
   { params }: { params: { id: string } }
-) {
-  try {
-    const testPlan = await prisma.testPlan.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!testPlan) {
-      return NextResponse.json(
-        { error: "测试计划不存在" },
-        { status: 404 }
-      );
+) => {
+  const testPlan = await prisma.testPlan.findUnique({
+    where: { id: params.id },
+    include: {
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        }
+      }
     }
+  });
 
-    return NextResponse.json(testPlan);
-  } catch (error) {
+  if (!testPlan) {
     return NextResponse.json(
-      { error: "获取测试计划失败" },
-      { status: 500 }
+      { error: "测试计划不存在" },
+      { status: 404 }
     );
   }
-}
 
-export async function PUT(
+  return NextResponse.json(testPlan);
+});
+
+export const PUT = withAuth(async (
   request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const body = await request.json();
-    
-    // 验证必填字段
-    if (!body.name || !body.status) {
-      return NextResponse.json(
-        { error: "名称和状态为必填项" },
-        { status: 400 }
-      );
-    }
-
-    // 转换日期格式
-    const data = {
-      name: body.name,
-      description: body.description || null,
-      content: body.content || null,
-      implementation: body.implementation || null,
-      status: body.status,
-      startDate: body.startDate ? new Date(body.startDate) : null,
-      endDate: body.endDate ? new Date(body.endDate) : null,
-      isAIGenerated: body.isAIGenerated || false,
-    };
-
-    const updatedPlan = await prisma.testPlan.update({
-      where: { id: params.id },
-      data,
-    });
-
-    return NextResponse.json(updatedPlan);
-  } catch (error) {
-    console.error("更新测试计划错误:", error);
+  { params }: { params: { id: string } },
+  session: Session
+) => {
+  const body = await request.json();
+  
+  // 验证必填字段
+  if (!body.name || !body.status) {
     return NextResponse.json(
-      { 
-        error: "更新测试计划失败",
-        details: error instanceof Error ? error.message : String(error)
-      },
-      { status: 500 }
+      { error: "名称和状态为必填项" },
+      { status: 400 }
     );
   }
-}
+
+  // 先检查是否为该计划的创建者
+  const existingPlan = await prisma.testPlan.findUnique({
+    where: { id: params.id },
+    select: { createdById: true }
+  });
+
+  if (!existingPlan) {
+    return NextResponse.json({ error: "测试计划不存在" }, { status: 404 });
+  }
+
+  // 只允许创建者或管理员编辑
+  if (existingPlan.createdById !== session.user.id && session.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: "无权限编辑此测试计划" }, { status: 403 });
+  }
+
+  // 转换日期格式
+  const data = {
+    name: body.name,
+    description: body.description || null,
+    content: body.content || null,
+    implementation: body.implementation || null,
+    status: body.status,
+    startDate: body.startDate ? new Date(body.startDate) : null,
+    endDate: body.endDate ? new Date(body.endDate) : null,
+    isAIGenerated: body.isAIGenerated || false,
+  };
+
+  const updatedPlan = await prisma.testPlan.update({
+    where: { id: params.id },
+    data,
+  });
+
+  return NextResponse.json(updatedPlan);
+});
