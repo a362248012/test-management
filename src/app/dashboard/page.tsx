@@ -6,7 +6,6 @@ import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { EnhancedCard } from "@/components/ui/enhanced-card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   TicketIcon,
