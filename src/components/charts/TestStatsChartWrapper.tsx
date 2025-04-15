@@ -1,15 +1,14 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import TestStatsChart from "./TestStatsChart";
 
-const TestStatsChart = dynamic(
-  () => import("./TestStatsChart"),
-  { 
-    ssr: false,
-    loading: () => <div>Loading...</div>
-  }
-);
+interface TestStatsChartWrapperProps {
+  data: Array<{
+    name: string;
+    value: number;
+  }>;
+}
 
-export default function TestStatsChartWrapper() {
-  return <TestStatsChart />;
+export default function TestStatsChartWrapper({ data }: TestStatsChartWrapperProps) {
+  return <TestStatsChart data={data} />;
 }

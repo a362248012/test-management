@@ -28,6 +28,7 @@ enum TicketStatus {
   DEVELOPING // 研发中
   PAUSED    // 已暂停
   LIVE      // 已上线
+  CLOSED    // 已关闭
 }
 
 enum ProjectType {
@@ -96,6 +97,7 @@ model Session {
 model TestCase {
   id          String   @id @default(cuid())
   project     Project  @relation(fields: [projectId], references: [id])
+  isAutomated Boolean  @default(false)
   projectId   String
   title       String
   description String?

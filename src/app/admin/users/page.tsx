@@ -39,6 +39,8 @@ export default function UsersPage() {
     password: '',
     role: 'USER' as 'ADMIN' | 'USER'
   })
+  // 添加新状态控制对话框
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -137,6 +139,7 @@ export default function UsersPage() {
             <Button onClick={() => {
               setEditUser(null)
               setFormData({ name: '', email: '', password: '', role: 'USER' })
+              setIsDialogOpen(true) // 打开对话框
             }}>
               添加用户
             </Button>
@@ -183,6 +186,7 @@ export default function UsersPage() {
                             password: '',
                             role: user.role
                           })
+                          setIsDialogOpen(true) // 打开对话框
                         }}
                       >
                         编辑
@@ -225,12 +229,16 @@ export default function UsersPage() {
         </Table>
       </div>
 
-      <Dialog open={!!editUser || formData.name !== ''} onOpenChange={(open) => {
-        if (!open) {
-          setEditUser(null)
-          setFormData({ name: '', email: '', password: '', role: 'USER' })
-        }
-      }}>
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open)
+          if (!open) {
+            setEditUser(null)
+            setFormData({ name: '', email: '', password: '', role: 'USER' }) // 确保清空表单数据
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editUser ? '编辑用户' : '添加用户'}</DialogTitle>

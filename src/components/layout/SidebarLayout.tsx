@@ -29,8 +29,8 @@ const menuGroups = [
 		items: [
 			{ name: "工单管理", path: "/tickets", icon: "/file.svg" },
 			{ name: "测试用例", path: "/test-cases", icon: "/file.svg" },
-			{ name: "测试计划", path: "/test-plans", icon: "/file.svg" },
-			{ name: "测试执行", path: "/test-executions", icon: "/file.svg" },
+			// { name: "测试计划", path: "/test-plans", icon: "/file.svg" },
+			// { name: "测试执行", path: "/test-executions", icon: "/file.svg" },
 			{ name: "缺陷管理", path: "/bugs", icon: "/file.svg" },
 		],
 	},
