@@ -26,15 +26,18 @@ export const authConfig: NextAuthOptions = {
     signIn: "/login"
   },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: User }) {
+    async jwt({ token, user }: { token: JWT; user?: User & { role?: string } }) { // 添加 user 类型提示以包含 role
       if (user) {
         token.id = user.id;
+        token.role = user.role; // 将用户的 role 添加到 token
       }
       return token;
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async session({ session, token }: { session: Session; token: JWT & { role?: string } }) { // 添加 token 类型提示以包含 role
       if (session.user && token.id) {
         session.user.id = token.id as string;
+        // 如果 token.role 未定义，则默认为 'USER'
+        session.user.role = token.role ?? 'USER'; 
       }
       return session;
     }

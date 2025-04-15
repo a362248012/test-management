@@ -2,7 +2,19 @@
 
 import { getServerSession } from "next-auth"
 import { authConfig } from "@/auth"
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
+import Link from "next/link"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { EnhancedCard } from "@/components/ui/enhanced-card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  TicketIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  AlertCircleIcon,
+  ArrowRightIcon
+} from "lucide-react"
 import { prisma } from "@/lib/prisma"
 import { TicketStatus } from "@prisma/client"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
@@ -536,225 +548,184 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">测试仪表板</h1>
-        <Badge variant="secondary" className="text-sm">
-          当前发布周期: {releaseDateStr}
-        </Badge>
+    <div className="container py-8 page-transition">
+      <div className="flex flex-col space-y-2 mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">仪表盘</h1>
+        <p className="text-muted-foreground">测试项目和工单的概览信息。</p>
       </div>
       
-      {!userId && (
-        <Alert variant="destructive">
-          <InfoIcon className="h-4 w-4" />
-          <AlertTitle>需要登录</AlertTitle>
-          <AlertDescription>
-            请登录以查看您的个人测试仪表板数据。
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* 第一行卡片 */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">测试用例总览</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{testCaseCount.total}</div>
-            <div className="flex gap-4 mt-2 text-sm">
-              <div className="flex items-center">
-                <span className="w-3 h-3 rounded-full bg-green-500 mr-1"></span>
-                <span>通过: {testCaseCount.passed}</span>
+      {/* 核心指标卡片 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <EnhancedCard
+          className="bg-gradient-to-br from-primary/10 to-primary/5"
+          hover={true}
+          borderStyle="accent"
+        >
+          <div className="flex flex-col items-center text-center p-2">
+            <div className="size-12 rounded-full flex items-center justify-center bg-primary/10 mb-3">
+              <TicketIcon className="size-6 text-primary" />
+            </div>
+            <h3 className="text-2xl font-bold">258</h3>
+            <p className="text-sm text-muted-foreground">总工单数量</p>
+          </div>
+        </EnhancedCard>
+        
+        <EnhancedCard
+          className="bg-gradient-to-br from-amber-500/10 to-amber-500/5"
+          hover={true}
+          borderStyle="accent"
+        >
+          <div className="flex flex-col items-center text-center p-2">
+            <div className="size-12 rounded-full flex items-center justify-center bg-amber-500/10 mb-3">
+              <ClockIcon className="size-6 text-amber-500" />
+            </div>
+            <h3 className="text-2xl font-bold">42</h3>
+            <p className="text-sm text-muted-foreground">处理中工单</p>
+          </div>
+        </EnhancedCard>
+        
+        <EnhancedCard
+          className="bg-gradient-to-br from-green-500/10 to-green-500/5"
+          hover={true}
+          borderStyle="accent"
+        >
+          <div className="flex flex-col items-center text-center p-2">
+            <div className="size-12 rounded-full flex items-center justify-center bg-green-500/10 mb-3">
+              <CheckCircleIcon className="size-6 text-green-500" />
+            </div>
+            <h3 className="text-2xl font-bold">189</h3>
+            <p className="text-sm text-muted-foreground">已解决工单</p>
+          </div>
+        </EnhancedCard>
+        
+        <EnhancedCard
+          className="bg-gradient-to-br from-red-500/10 to-red-500/5"
+          hover={true}
+          borderStyle="accent"
+        >
+          <div className="flex flex-col items-center text-center p-2">
+            <div className="size-12 rounded-full flex items-center justify-center bg-red-500/10 mb-3">
+              <AlertCircleIcon className="size-6 text-red-500" />
+            </div>
+            <h3 className="text-2xl font-bold">27</h3>
+            <p className="text-sm text-muted-foreground">待解决BUG</p>
+          </div>
+        </EnhancedCard>
+      </div>
+      
+      {/* 图表区域 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <EnhancedCard 
+          title="工单趋势" 
+          description="过去30天的工单创建与解决趋势"
+          className="enhanced-shadow"
+        >
+          <div className="aspect-[4/3]">
+            {/* 此处放置趋势线图组件 */}
+            <div className="w-full h-full bg-muted/20 rounded-md flex items-center justify-center">
+              图表组件
+            </div>
+          </div>
+        </EnhancedCard>
+        
+        <EnhancedCard 
+          title="工单类型分布" 
+          description="各类工单的数量分布"
+          className="enhanced-shadow"
+        >
+          <div className="aspect-[4/3]">
+            {/* 此处放置饼图组件 */}
+            <div className="w-full h-full bg-muted/20 rounded-md flex items-center justify-center">
+              饼图组件
+            </div>
+          </div>
+        </EnhancedCard>
+      </div>
+      
+      {/* 最近工单 */}
+      <EnhancedCard 
+        title="最近工单" 
+        description="最近创建和更新的工单"
+        className="enhanced-shadow mb-8"
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left font-medium p-3">ID</th>
+                <th className="text-left font-medium p-3">标题</th>
+                <th className="text-left font-medium p-3">状态</th>
+                <th className="text-left font-medium p-3">优先级</th>
+                <th className="text-left font-medium p-3">创建时间</th>
+                <th className="text-left font-medium p-3">负责人</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array(5).fill(0).map((_, i) => (
+                <tr key={i} className="border-b hover:bg-muted/30 transition-colors">
+                  <td className="p-3"><span className="font-mono text-xs">#T-{1000 + i}</span></td>
+                  <td className="p-3"><Link href={`/tickets/${i}`} className="hover:underline text-primary font-medium">示例工单标题 {i+1}</Link></td>
+                  <td className="p-3">
+                    <Badge variant={i % 3 === 0 ? "secondary" : i % 3 === 1 ? "secondary" : "default"}>
+                      {i % 3 === 0 ? "待处理" : i % 3 === 1 ? "处理中" : "已完成"}
+                    </Badge>
+                  </td>
+                  <td className="p-3">
+                    <Badge variant={i % 3 === 0 ? "destructive" : i % 3 === 1 ? "default" : "secondary"}>
+                      {i % 3 === 0 ? "高" : i % 3 === 1 ? "中" : "低"}
+                    </Badge>
+                  </td>
+                  <td className="p-3 text-muted-foreground text-sm">2023-04-{10 + i}</td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback>{["ZY", "WH", "LM", "CJ", "YT"][i][0]}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{["张三", "李四", "王五", "赵六", "钱七"][i]}</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex justify-end mt-4">
+          <Button size="sm" variant="outline" asChild>
+            <Link href="/tickets">
+              查看全部工单
+              <ArrowRightIcon className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </EnhancedCard>
+      
+      {/* 项目进度 */}
+      <EnhancedCard 
+        title="项目进度" 
+        description="当前活跃项目的完成情况"
+        className="enhanced-shadow"
+      >
+        <div className="space-y-6">
+          {Array(3).fill(0).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="font-medium">项目 {i+1}</div>
+                <div className="text-sm text-muted-foreground">{30 + i*20}%</div>
               </div>
-              <div className="flex items-center">
-                <span className="w-3 h-3 rounded-full bg-red-500 mr-1"></span>
-                <span>失败: {testCaseCount.failed}</span>
+              <div className="h-2 rounded-full bg-muted">
+                <div 
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${30 + i*20}%` }}
+                />
               </div>
-              <div className="flex items-center">
-                <span className="w-3 h-3 rounded-full bg-gray-500 mr-1"></span>
-                <span>其他: {testCaseCount.other}</span>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <div>开始: 2023-03-01</div>
+                <div>预计完成: 2023-06-30</div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              最近测试用例
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentTestCases.length > 0 ? (
-              <ul className="space-y-2">
-                {recentTestCases.map((testCase) => (
-                  <li key={testCase.id} className="text-sm flex justify-between">
-                    <span className="truncate max-w-[70%]">{testCase.title}</span>
-                    <Badge 
-                      variant={testCase.status === "PASSED" ? "success" : 
-                             testCase.status === "FAILED" ? "destructive" : "secondary"}
-                    >
-                      {testCase.status}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {userId ? "本周期暂无测试用例" : "请登录查看测试用例"}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">测试计划进度</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TestPlanProgressChartWrapper progress={testPlanProgress} />
-            <p className="text-sm mt-2 text-center">
-              {testPlanProgress > 0 
-                ? `当前进度: ${testPlanProgress}%` 
-                : "暂无活跃测试计划"}
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* 替换原第四个卡片为工单统计 */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">工单概览</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentTickets.length > 0 ? (
-              <ul className="space-y-2">
-                {recentTickets.map((ticket) => (
-                  <li key={ticket.id} className="text-sm flex justify-between">
-                    <span className="truncate max-w-[70%]">{ticket.title}</span>
-                    <Badge 
-                      variant={ticket.priority === "P0" ? "destructive" : 
-                             ticket.priority === "P1" ? "default" : "secondary"}
-                    >
-                      {ticket.status}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {userId ? "暂无活跃工单" : "请登录查看工单"}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 测试问题卡片单独一行展示 */}
-      <div className="grid gap-6 grid-cols-1">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">需要关注的问题</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentIssues.length > 0 ? (
-              <ul className="space-y-2">
-                {recentIssues.map((issue) => (
-                  <li key={issue.id} className="text-sm">
-                    <div className="flex items-center">
-                      <Badge variant="secondary" className="mr-1">
-                        {issue.testCase.priority}
-                      </Badge>
-                      <span className="truncate">{issue.testCase.title}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {userId ? "近期无失败测试" : "请登录查看测试问题"}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="space-y-6 md:col-span-2">
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>通过/失败趋势</CardTitle>
-                <CardDescription>最近30天的测试执行结果趋势</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {trendData.length > 0 ? (
-                  <PassFailTrendChartWrapper data={trendData} />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <Skeleton className="h-[250px] w-full" />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>测试统计</CardTitle>
-                <CardDescription>测试执行和覆盖率指标</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {testStatsData.length > 0 ? (
-                  <TestStatsChartWrapper data={testStatsData} />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <Skeleton className="h-[250px] w-full" />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          
-          <SystemHealth />
+          ))}
         </div>
-
-        <div className="space-y-6">
-          {/* 工单状态饼图 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>工单状态分布</CardTitle>
-              <CardDescription>当前工单状态分布情况</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {ticketStats.length > 0 ? (
-                <TicketStatusChartWrapper data={ticketStats} />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <Skeleton className="h-[250px] w-full" />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 工单优先级饼图 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>工单优先级分布</CardTitle>
-              <CardDescription>当前工单优先级分布情况</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {ticketPriorityStats.length > 0 ? (
-                <TicketStatusChartWrapper data={ticketPriorityStats} />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <Skeleton className="h-[250px] w-full" />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      </EnhancedCard>
     </div>
-  );
+  )
 }

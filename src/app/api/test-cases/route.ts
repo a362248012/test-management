@@ -1,151 +1,87 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { Priority } from '@/lib/constants'
-import { getServerSession } from 'next-auth'
-import { authConfig } from '@/auth'
-import type { Session } from 'next-auth'
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { Priority } from '@/lib/constants';
+import { withAuth, withErrorHandler } from '@/lib/api-middleware';
+import type { Session } from 'next-auth';
 
-export async function GET(request: Request) {
-  try {
-    const session = await getServerSession(authConfig) as Session
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { searchParams } = new URL(request.url)
-    const projectId = searchParams.get('projectId')
-
-    const testCases = await prisma.testCase.findMany({
-      where: {
-        createdById: session.user.id,
-        ...(projectId && { projectId })
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    return NextResponse.json(testCases)
-  } catch (error) {
-    console.error('Error fetching test cases:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
-    )
-  }
-}
-
-export async function DELETE(request: Request) {
-  try {
-    const session = await getServerSession(authConfig) as Session
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { id } = await request.json()
-    
-    await prisma.testCase.delete({
-      where: {
-        id,
-        createdById: session.user.id
-      }
-    })
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error deleting test case:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
-    )
-  }
-}
-
-export async function PATCH(request: Request) {
-  try {
-    const session = await getServerSession(authConfig) as Session
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const requestData = await request.json()
-    const { id, priority, ...data } = requestData
-    
-    const testCase = await prisma.testCase.update({
-      where: {
-        id,
-        createdById: session.user.id
-      },
-      data: {
-        ...data,
-        priority: priority
-      }
-    })
-
-    return NextResponse.json(testCase)
-  } catch (error) {
-    const requestBody = await request.json().catch(() => 'Failed to parse request body')
-    console.error('Error updating test case:', {
-      error,
-      requestBody
-    })
-    return NextResponse.json(
-      { 
-        error: 'Internal Server Error', 
-        details: error instanceof Error ? error.message : String(error),
-        requestData: requestBody
-      },
-      { status: 500 }
-    )
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const data = await request.json();
-    const session = await getServerSession(authConfig) as Session;
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: "未授权" }, { status: 401 });
-    }
-    
-    if (!data.projectId) {
-      return NextResponse.json({ error: "创建测试用例必须关联项目" }, { status: 400 });
-    }
-    
-    // 创建测试用例，包含必要的关系
-    const testCase = await prisma.testCase.create({
-      data: {
-        title: data.title,
-        description: data.description || "",
-        steps: data.steps,
-        expected: data.expected,
-        priority: data.priority,
-        isAIGenerated: false,
-        project: {
-          connect: { id: data.projectId }
+export const GET = withErrorHandler(async (request: Request) => {
+  // 获取查询参数
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get('projectId');
+  const status = searchParams.get('status');
+  const priority = searchParams.get('priority');
+  
+  // 构建查询条件
+  const where: any = {};
+  if (projectId) where.projectId = projectId;
+  if (status) where.status = status;
+  if (priority) where.priority = priority as Priority;
+  
+  const testCases = await prisma.testCase.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      createdBy: {
+        select: {
+          name: true,
+          email: true,
         },
-        // 连接到当前用户
-        createdBy: {
-          connect: { id: session.user.id }
-        },
-        // 关联工单，如果提供了
-        ...(data.ticketId && {
-          relatedTickets: {
-            connect: [{ id: data.ticketId }]
-          }
-        }),
-        aiPrompt: null,
-        aiHistory: []
-      }
-    });
-    
-    return NextResponse.json(testCase);
-  } catch (error: any) {
-    console.error("创建测试用例错误:", error);
-    return NextResponse.json(
-      { error: "创建测试用例失败", details: error.message },
-      { status: 500 }
-    );
+      },
+    },
+  });
+  
+  return NextResponse.json(testCases);
+});
+
+export const DELETE = withAuth(async (request: Request, _, session: Session) => {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  
+  if (!id) {
+    return NextResponse.json({ error: 'ID参数必须提供' }, { status: 400 });
   }
-}
+  
+  const deletedTestCase = await prisma.testCase.delete({
+    where: {
+      id,
+      createdById: session.user.id, // 确保只能删除自己创建的用例
+    },
+  });
+  
+  return NextResponse.json(deletedTestCase);
+});
+
+export const PATCH = withAuth(async (request: Request, _, session: Session) => {
+  const requestData = await request.json();
+  const { id, priority, ...data } = requestData;
+  
+  const testCase = await prisma.testCase.update({
+    where: {
+      id,
+      createdById: session.user.id
+    },
+    data: {
+      ...data,
+      priority: priority
+    }
+  });
+
+  return NextResponse.json(testCase);
+});
+
+export const POST = withAuth(async (request: Request, _, session: Session) => {
+  const data = await request.json();
+  
+  const testCase = await prisma.testCase.create({
+    data: {
+      ...data,
+      createdBy: {
+        connect: {
+          id: session.user.id
+        }
+      }
+    }
+  });
+  
+  return NextResponse.json(testCase);
+});

@@ -1,14 +1,9 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { withAdminAuth } from '@/lib/api-middleware';
+import bcrypt from 'bcryptjs';
 
-export async function GET() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+export const GET = withAdminAuth(async () => {
   const users = await prisma.user.findMany({
     select: {
       id: true,
@@ -16,87 +11,90 @@ export async function GET() {
       email: true,
       emailVerified: true,
       image: true,
-      role: true // 添加 role 字段
+      role: true
     }
-  })
-  return NextResponse.json(users)
-}
+  });
+  
+  return NextResponse.json(users);
+});
 
-export async function POST(request: Request) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const POST = withAdminAuth(async (request: Request) => {
+  const { name, email, password, role = 'USER' } = await request.json();
+  
+  // 验证必填字段
+  if (!email || !password) {
+    return NextResponse.json({ error: '邮箱和密码为必填项' }, { status: 400 });
   }
-
-  const { name, email, password } = await request.json()
+  
+  // 检查邮箱是否已存在
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    return NextResponse.json({ error: '该邮箱已被注册' }, { status: 400 });
+  }
+  
+  // 加密密码
+  const hashedPassword = await bcrypt.hash(password, 10);
+  
   const user = await prisma.user.create({
     data: {
       name,
       email,
-      password
+      password: hashedPassword,
+      role
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true
     }
-  })
-  return NextResponse.json(user)
-}
+  });
+  
+  return NextResponse.json(user);
+});
 
-export async function PUT(request: Request) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const PUT = withAdminAuth(async (request: Request) => {
+  const { id, name, email, role, password } = await request.json();
+  
+  if (!id) {
+    return NextResponse.json({ error: '用户ID为必填项' }, { status: 400 });
   }
-
-  const { id, name, email, role } = await request.json()
+  
+  const updateData: any = {};
+  if (name) updateData.name = name;
+  if (email) updateData.email = email;
+  if (role) updateData.role = role;
+  
+  // 如果提供了新密码，就更新密码
+  if (password) {
+    updateData.password = await bcrypt.hash(password, 10);
+  }
+  
   const user = await prisma.user.update({
     where: { id },
-    data: {
-      name,
-      email,
-      role
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true
     }
-  })
-  return NextResponse.json(user)
-}
-
-export async function DELETE(request: Request) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { id } = await request.json()
+  });
   
-  // 验证1：不能删除自己
-  if (id === session.user.id) {
-    return NextResponse.json({ error: '不能删除自己的账户' }, { status: 400 })
+  return NextResponse.json(user);
+});
+
+export const DELETE = withAdminAuth(async (request: Request) => {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  
+  if (!id) {
+    return NextResponse.json({ error: 'ID参数必须提供' }, { status: 400 });
   }
-
-  // 验证2：获取要删除的用户信息
-  const userToDelete = await prisma.user.findUnique({
-    where: { id },
-    select: { role: true }
-  })
-
-  if (!userToDelete) {
-    return NextResponse.json({ error: '用户不存在' }, { status: 404 })
-  }
-
-  // 验证3：检查当前用户是否是管理员
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true }
-  })
-
-  if (currentUser?.role !== 'ADMIN') {
-    return NextResponse.json({ error: '无删除权限' }, { status: 403 })
-  }
-
-  // 验证4：不能删除其他管理员（可选）
-  if (userToDelete.role === 'ADMIN') {
-    return NextResponse.json({ error: '不能删除其他管理员' }, { status: 403 })
-  }
-
-  await prisma.user.delete({
+  
+  const user = await prisma.user.delete({
     where: { id }
-  })
-  return NextResponse.json({ success: true })
-}
+  });
+  
+  return NextResponse.json({ message: '用户已删除', id });
+});
